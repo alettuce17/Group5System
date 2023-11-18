@@ -22,9 +22,10 @@ def moveApp(event):
 def exitClick():
     root.destroy()
 
-'''def addItem():
+def addItem():
     # Implement your add item functionality here
-    text.config(text="Item Added!")'''
+    text.config(text="Item Added!")
+
 
 
 # Photo sidebar
@@ -48,7 +49,34 @@ exitLabel.place(x=564, y=2)
 # Exit bind
 exitLabel.bind("<Button-1>", lambda e: exitClick())
 
-#here
+# Add Item Button
+addItemPhoto = PhotoImage(file='AddItem.png')
+add_button = Button(root, image=addItemPhoto, bg='#FFFFFF', command=addItem, borderwidth=0 )
+add_button.place(x=19, y=78, anchor='nw')  # Set anchor to 'nw' for exact position
+
+text = Label(root, text="")
+text.pack(padx=19, pady=78)
+
+
+# Display Item Button
+displayItemPhoto = PhotoImage(file='DisplayItems.png')
+displayLabel = Label(root, image=displayItemPhoto, border=0)
+displayLabel.place(x=179,y=78)
+
+# Update Item Button
+updateItemPhoto = PhotoImage(file='UpdateItem.png')
+updateLabel = Label(root, image=updateItemPhoto, border=0, bg='#FFFFFF')
+updateLabel.place(x=339,y=78)
+
+# Delete Item Button
+deleteItemPhoto = PhotoImage(file='DeleteItem.png')
+deleteLabel = Label(root, image=deleteItemPhoto, border=0)
+deleteLabel.place(x=499,y=78)
+
+# About GUI Button
+aboutGUIPhoto = PhotoImage(file='AboutGUI.png')
+aboutGUILabel = Label(root, image=aboutGUIPhoto, border=0)
+aboutGUILabel.place(x=576,y=424)
 
 # Set window position to center
 screen_width = root.winfo_screenwidth()
