@@ -23,7 +23,6 @@ def exitClick():
     root.destroy()
 
 def addItem():
-    # Implement your add item functionality here
     text.config(text="Item Added!")
 
 
