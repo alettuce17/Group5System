@@ -1,64 +1,28 @@
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
-4439, fd, Musical Instruments, 2, asd
-4439, fd, Musical as, 2, asd
+2990, Product_2990, 16.59, Brand_4, Jewelry
+8642, Product_8642, 22.1, Brand_6, Skincare
+3309, Product_3309, 67.94, Brand_4, Makeup
+5258, Product_5258, 79.08, Brand_7, Home & Kitchen
+9801, Product_9801, 72.39, Brand_8, Nutrition
+4699, Product_4699, 40.7, Brand_7, Men's Store
+6426, Product_6426, 74.18, Brand_8, Bath and Body
+7420, Product_7420, 5.3, Brand_9, Makeup
+1416, Product_1416, 23.71, Brand_5, Intimate Apparel
+7740, Product_7740, 49.68, Brand_8, Makeup
+8454, Product_8454, 39.34, Brand_3, Home & Kitchen
+5326, Product_5326, 50.69, Brand_8, Fragrance
+1006, Product_1006, 27.2, Brand_5, Home & Kitchen
+2535, Product_2535, 44.54, Brand_7, Fragrance
+2990, Product_2990, 16.59, Brand_4, Jewelry
+8642, Product_8642, 22.1, Brand_6, Skincare
+3309, Product_3309, 67.94, Brand_4, Makeup
+5258, Product_5258, 79.08, Brand_7, Home & Kitchen
+9801, Product_9801, 72.39, Brand_8, Nutrition
+4699, Product_4699, 40.7, Brand_7, Men's Store
+6426, Product_6426, 74.18, Brand_8, Bath and Body
+7420, Product_7420, 5.3, Brand_9, Makeup
+1416, Product_1416, 23.71, Brand_5, Intimate Apparel
+7740, Product_7740, 49.68, Brand_8, Makeup
+8454, Product_8454, 39.34, Brand_3, Home & Kitchen
+5326, Product_5326, 50.69, Brand_8, Fragrance
+1006, Product_1006, 27.2, Brand_5, Home & Kitchen
+2535, Product_2535, 44.54, Brand_7, Fragrance

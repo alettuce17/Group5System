@@ -1,416 +1,453 @@
 from tkinter import *
-import tkinter as tk
-from tkinter import ttk, simpledialog, messagebox
+from tkinter import messagebox, font, ttk
 import random
+from reportlab.pdfgen import canvas
+
+# Declare entry variables as global
+name_entry = None
+price_entry = None
+brand_entry = None
+category_var = None
+frame_visible = True
+table = None  # Add a global variable for the table
+
+
+
+def reset_frame():
+    global frame_screen
+    frame_screen.destroy()  # Destroy the existing frame
+    frame_screen = Frame(root, width=920, height=536, borderwidth=10, relief="groove")
+    frame_screen.place(x=360, y=184)
+
+
+def add_item():
+    global frame_screen, name_entry, price_entry, brand_entry, category_var, frame_visible
+    reset_frame()  # Reset the frame before creating new widgets
+    font.Font(size=20)
+
+    delete_label = Label(frame_screen, text="Add Item", font=("Helvetica", 24))
+    delete_label.place(x=100, y=30)
+    entry_font = font.Font(size=20)  # Set the desired font size
+    name_label = Label(frame_screen, text="Name:")
+
+    name_label.place(x=100, y=80)
+    name_entry = Entry(frame_screen, width=40, font=entry_font)  # Set width to 70 characters
+    name_entry.place(x=100, y=110, height=58)  # Set height to 58 pixels
+
+    price_label = Label(frame_screen, text="Price:")
+    price_label.place(x=100, y=180)
+    price_entry = Entry(frame_screen, width=40, font=entry_font)
+    price_entry.place(x=100, y=208, height=58)
+
+    brand_label = Label(frame_screen, text="Brand:")
+    brand_label.place(x=100, y=276)
+    brand_entry = Entry(frame_screen, width=40, font=entry_font)
+    brand_entry.place(x=100, y=304, height=58)
+
+
+    # Category dropdown using Menubutton
+    category_label = Label(frame_screen, text="Category:")
+    category_label.place(x=100, y=372)
+
+    categories = [
+        "None",
+        "Makeup",
+        "Fragrance",
+        "Skincare",
+        "Bath and Body",
+        "Intimate Apparel",
+        "Accessories",
+        "Jewelry",
+        "Men's Store",
+        "Home & Kitchen",
+        "Nutrition",
+        "Other"
+    ]
 
-class MainUI:
-    def __init__(self, root, frame_photo_path, title_logo_path, exit_photo_path, add_item_path, display_items_path, update_item_path, delete_item_path):
-        self.root = root
-        self.root.overrideredirect(1)
-        self.root.wm_attributes("-transparentcolor", "grey")
-
-        # Get screen dimensions
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-
-        # Set window dimensions
-        window_width = 627
-        window_height = 459
-
-        # Calculate position for the window to appear in the center
-        x_position = (screen_width - window_width) // 2
-        y_position = (screen_height - window_height) // 2
-
-        self.root.geometry(f'{window_width}x{window_height}+{x_position}+{y_position}')
-
-        # Variables to store offset
-        global offset_x, offset_y
-        offset_x = 0
-        offset_y = 0
-
-        # Photo sidebar
-        frame_photo = PhotoImage(file=frame_photo_path)
-        frameLabel = Label(root, border=0, bg='grey', image=frame_photo)
-        frameLabel.image = frame_photo  # Keep a reference to the image
-        frameLabel.pack(fill=BOTH, expand=True)
-
-        # Frame photo bind
-        frameLabel.bind("<ButtonPress-1>", self.move_start)
-        frameLabel.bind("<B1-Motion>", self.move_app)
-
-        # Logo
-        title_logo = PhotoImage(file=title_logo_path)
-        titleLabel = Label(root, image=title_logo, border=0, bg='#7D4D47')
-        titleLabel.image = title_logo  # Keep a reference to the image
-        titleLabel.place(x=52, y=17)
-
-        # Exit button photo
-        exit_photo = PhotoImage(file=exit_photo_path)
-
-        # Exit label
-        exitLabel = Label(root, image=exit_photo, border=0, bg='#7D4D47')
-        exitLabel.image = exit_photo  # Keep a reference to the image
-        exitLabel.place(x=564, y=2)
-
-        # Exit bind
-        exitLabel.bind("<Button-1>", lambda e: self.exit_click())
-
-        # Add Photo
-        add_item = PhotoImage(file=add_item_path)
-
-        # Buttons
-        addButton = Button(root, text="Add Item", image=add_item, bg='#FFFFFF', borderwidth=0,
-                           command=self.add_item)
-        addButton.image = add_item
-        addButton.place(x=19, y=78, anchor='nw')
-
-        display_items = PhotoImage(file=display_items_path)
-        displayButton = Button(root, text="Display Items", image=display_items, bg='#FFFFFF', borderwidth=0,
-                               command=self.display_item)
-        displayButton.image = display_items
-        displayButton.place(x=179, y=78, anchor='nw')
-
-        update_item = PhotoImage(file=update_item_path)
-        updateButton = Button(root, text="Update Item", image=update_item, bg='#FFFFFF', borderwidth=0,
-                              command=self.update_item)
-        updateButton.image = update_item
-        updateButton.place(x=339, y=78, anchor='nw')
-
-        delete_item = PhotoImage(file=delete_item_path)
-        deleteButton = Button(root, text="Delete Item", image=delete_item, bg='#FFFFFF', borderwidth=0,
-                              command=self.delete_item)
-        deleteButton.image = delete_item
-        deleteButton.place(x=499, y=78, anchor='nw')
-
-        self.data_file = "catalog_data.txt"
-        # Display Items Table
-        self.tree = ttk.Treeview(self.root)
-        self.tree["columns"] = ("ID", "Title", "Category", "Price")
-
-        # Set column headings
-        self.tree.heading("#0", text="", anchor=tk.W)
-        self.tree.heading("ID", text="ID", anchor=tk.W)
-        self.tree.heading("Title", text="Title", anchor=tk.W)
-        self.tree.heading("Category", text="Category", anchor=tk.W)
-        self.tree.heading("Price", text="Price", anchor=tk.W)
-
-        # Set column widths
-        self.tree.column("#0", stretch=tk.NO, minwidth=0, width=0)
-        self.tree.column("ID", stretch=tk.NO, minwidth=0, width=50)
-        self.tree.column("Title", stretch=tk.NO, minwidth=0, width=150)
-        self.tree.column("Category", stretch=tk.NO, minwidth=0, width=200)
-        self.tree.column("Price", stretch=tk.NO, minwidth=0, width=100)
-
-        self.tree.pack(pady=20)
-
-        self.populate_table()  # Populate the table with existing items
+    category_var = StringVar()
+    category_var.set(categories[0])  # Set default category
 
-    def populate_table(self):
-        try:
-            with open("catalog_data.txt", "r") as file:
-                items = file.readlines()
-        except FileNotFoundError:
-            items = []
+    category_menu = Menubutton(frame_screen, textvariable=category_var, indicatoron=True, borderwidth=1,
+                               relief="raised", width=30)
+    category_menu.place(x=100, y=400, height=30)
 
-        for item in items:
-            parts = item.split(", ")
-            if len(parts) >= 5:  # Updated to check for at least 5 parts
-                item_id, title, category, price, brand = parts[0], parts[1], parts[2], parts[3], parts[4]
-                self.tree.insert("", tk.END, values=(item_id, title, category, price, brand))
+    category_menu.menu = Menu(category_menu, tearoff=False)
+    category_menu["menu"] = category_menu.menu
 
-    def move_start(self, event):
-        global offset_x, offset_y
-        offset_x = event.x_root - self.root.winfo_x()
-        offset_y = event.y_root - self.root.winfo_y()
+    for category in categories:
+        category_menu.menu.add_radiobutton(label=category, variable=category_var, value=category)
 
-    def move_app(self, event):
-        self.root.geometry(f'+{event.x_root - offset_x}+{event.y_root - offset_y}')
+    # Other widgets (save button, close button) remain unchanged
 
-    def exit_click(self):
-        self.root.quit()
+    # Save button
+    save_button = Button(frame_screen, text="Save", command=save_item)
+    save_button.place(x=100, y=440, height=30)
+    # Close button
+    close_button = Button(frame_screen, text="Close", command=reset_frame)
+    close_button.place(x=100, y=480, height=30)
+
+
+def save_item():
+    # Function to handle the "Save" button click
+    global name_entry, price_entry, brand_entry, category_var
+    item_name = name_entry.get()
+    item_price = price_entry.get()
+    item_brand = brand_entry.get()
+    item_category = category_var.get()
+
+    # Check for empty fields, non-numeric price, and category not selected
+    if not item_name or not item_price or not item_price.isdigit() or item_category == "None":
+        messagebox.showerror("Error", "Please fill in all fields correctly and select a valid category.")
+        return
+
+    # Check if the item name already exists in the catalog
+    if is_duplicate_name(item_name):
+        messagebox.showerror("Error", "Item name already exists in the catalog. Please choose a different name.")
+        return
 
-    def add_item(self):
-        AddItemUI(self.root, self)
+    item_id = generate_unique_id()
+    with open("catalog_data.txt", "a") as file:
+        file.write(f"{item_id}, {item_name}, {item_price}, {item_brand}, {item_category}\n")
 
-    def display_item(self):
-        display_ui = DisplayItemUI(self)
-        display_ui.show()
+    messagebox.showinfo("Success", f"Item added successfully!\nItem ID: {item_id}")
 
-    def update_item(self):
-        UpdateItemUI(self.root)
 
-    def delete_item(self):
-        DeleteItemUI(self.root)
+def is_duplicate_name(new_name):
+    try:
+        with open("catalog_data.txt", "r") as file:
+            existing_names = [line.split(",")[1].strip() for line in file if line.strip() and line.split(",")]
+            return new_name in existing_names
+    except FileNotFoundError:
+        return False
 
-class AddItemUI:
-    def __init__(self, root, main_ui):
-        self.root = Toplevel(root)
-        self.root.title("Add Item")
 
-        self.main_ui = main_ui
+def generate_unique_id():
+    try:
+        with open("catalog_data.txt", "r") as file:
+            existing_ids = {int(line.split(",")[0]) for line in file if line.strip() and line.split(",")}
+    except FileNotFoundError:
+        existing_ids = set()
 
-        # Item Name
-        title_label = tk.Label(self.root, text="Enter Item Name:")
-        title_label.pack()
+    # Generate a new ID until a unique one is found
+    new_id = random.randint(1000, 9999)
+    while new_id in existing_ids:
+        new_id = random.randint(1000, 9999)
 
-        self.title_entry = tk.Entry(self.root)
-        self.title_entry.pack()
+    return new_id
 
-        brand_label = tk.Label(self.root, text="Enter Brand:")
-        brand_label.pack()
 
-        self.brand_entry = tk.Entry(self.root)
-        self.brand_entry.pack()
+def delete():
+    global frame_screen, frame_visible
+    reset_frame()  # Reset the frame before creating new widgets
 
-        price_label = tk.Label(self.root, text="Enter Price:")
-        price_label.pack()
+    # Create UI for deleting an item
+    entry_font = font.Font(size=20)  # Set the desired font size
 
-        self.price_entry = tk.Entry(self.root)
-        self.price_entry.pack()
+    delete_label = Label(frame_screen, text="Delete Item", font=("Helvetica", 24))
+    delete_label.place(x=100, y=30)
 
-        category_label = tk.Label(self.root, text="Select Category:")
-        category_label.pack()
+    item_id_label = Label(frame_screen, text="Enter Item ID to delete:")
+    item_id_label.place(x=100, y=90)
 
-        categories = ["None", "Apparel and Fashion", "Electronics", "Home and Garden", "Toys and Games",
-                      "Beauty and Personal Care", "Sports and Outdoors", "Books and Stationery",
-                      "Health and Wellness", "Automotive", "Electrical Appliances", "Office Supplies",
-                      "Food and Beverages", "Jewelry and Accessories", "Pet Supplies", "Musical Instruments", "Other"]
+    item_id_entry = Entry(frame_screen, width=40, font=entry_font)
+    item_id_entry.place(x=100, y=120, height=58)
 
-        self.category_var = StringVar()
-        self.category_var.set(categories[0])  # Set the default category to "None"
-        category_dropdown = tk.OptionMenu(self.root, self.category_var, *categories)
-        category_dropdown.pack()
+    delete_button = Button(frame_screen, text="Delete", command=lambda: delete_item(item_id_entry.get()))
+    delete_button.place(x=100, y=188, height=58)
 
-        save_button = tk.Button(self.root, text="Save", command=self.try_save_item)
-        save_button.pack()
+    # Close button
+    close_button = Button(frame_screen, text="Close", command=reset_frame)
+    close_button.place(x=250, y=188, height=58)
 
-        # Center the window after fully initializing
-        self.root.update_idletasks()
-        x = (self.root.winfo_screenwidth() - self.root.winfo_reqwidth()) / 2
-        y = (self.root.winfo_screenheight() - self.root.winfo_reqheight()) / 2
-        self.root.geometry("+%d+%d" % (x, y))
 
-    def try_save_item(self):
-        title = self.title_entry.get()
-        category = self.category_var.get()
-        price = self.price_entry.get()
-        brand = self.brand_entry.get()
+def delete_item(item_id_str):
+    if item_id_str is None:
+        return  # Return to the main menu
 
-        error_messages = []
+    if not item_id_str.isdigit():
+        messagebox.showerror("Error", "Please enter a valid number for the Item ID.")
+        return
 
-        if not title:
-            error_messages.append("Please enter a valid item name.")
+    item_id = int(item_id_str)
 
-        if not price.isdigit():
-            error_messages.append("Please enter a valid price (numeric value).")
+    try:
+        with open("catalog_data.txt", "r") as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        lines = []
 
-        if not category or category == "None":
-            error_messages.append("Please select a valid category.")
-
-        if error_messages:
-            error_message = "\n".join(error_messages)
-            messagebox.showerror("Error", error_message)
-            return
-
-        price = int(price)
-
-        item_id = self.generate_unique_id()
-
-        with open("catalog_data.txt", "a") as file:
-            file.write(f"{item_id}, {title}, {category}, {price}, {brand}\n")
-
-        success_message = f"Item added successfully!\nItem ID: {item_id}\n\n"
-        success_message += f"Title: {title}\nCategory: {category}\nPrice: {price}\nBrand: {brand}"
-
-        messagebox.showinfo("Success", success_message)
-
-        self.root.destroy()
-        self.main_ui.populate_table()
-        root.focus_set()
-
-class DisplayItemUI:
-    def __init__(self, main_ui):
-        self.main_ui = main_ui
-
-        # Frame for DisplayItemUI
-        self.frame = Frame(main_ui.root, bg='#7D4D47')
-        self.frame.place(relx=0, rely=0, relwidth=1, relheight=1)
-
-        # Display Items Table in DisplayItemUI
-        self.tree = ttk.Treeview(self.frame)
-        self.tree["columns"] = ("ID", "Title", "Category", "Price")
-
-        # Set column headings
-        self.tree.heading("#0", text="", anchor=tk.W)
-        self.tree.heading("ID", text="ID", anchor=tk.W)
-        self.tree.heading("Title", text="Title", anchor=tk.W)
-        self.tree.heading("Category", text="Category", anchor=tk.W)
-        self.tree.heading("Price", text="Price", anchor=tk.W)
-
-        # Set column widths
-        self.tree.column("#0", stretch=tk.NO, minwidth=0, width=0)
-        self.tree.column("ID", stretch=tk.NO, minwidth=0, width=50)
-        self.tree.column("Title", stretch=tk.NO, minwidth=0, width=150)
-        self.tree.column("Category", stretch=tk.NO, minwidth=0, width=200)
-        self.tree.column("Price", stretch=tk.NO, minwidth=0, width=100)
-
-        # Scrollbar
-        scrollbar = ttk.Scrollbar(self.frame, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y")
-
-        self.tree.pack(pady=20)
-
-        self.populate_table()  # Populate the table with existing items
-
-        # Return Button
-        return_button = tk.Button(self.frame, text="Return", command=self.return_to_main_ui)
-        return_button.pack(side="bottom")
-
-    def populate_table(self):
-        try:
-            with open("catalog_data.txt", "r") as file:
-                items = file.readlines()
-        except FileNotFoundError:
-            items = []
-
-        for item in items:
-            parts = item.split(", ")
-            if len(parts) >= 4:
-                item_id, title, category, price = parts[0], parts[1], parts[2], parts[3]
-                self.tree.insert("", tk.END, values=(item_id, title, category, price))
-
-    def show(self):
-        # Display the frame
-        self.frame.lift()
-
-    def return_to_main_ui(self):
-        self.frame.destroy()
-
-class UpdateItemUI:
-    def __init__(self, parent, main_ui):
-        self.parent = parent
-        self.root = Toplevel(self.parent)
-        self.root.title("Update Item")
-        self.main_ui = main_ui  # Store the reference to the main UI
-        # Add UI elements for UpdateItem here
-
-        while True:
-            item_id = simpledialog.askstring("Update Item", "Enter Item ID to update:")
-            if item_id is None:  # User clicked Cancel
-                return  # Return to the main menu
-
-            if item_id.isdigit():
-                item_id = int(item_id)
-                break
-            else:
-                messagebox.showerror("Error", "Please enter a valid number for the Item ID.")
-
-        try:
-            with open(self.main_ui.data_file, "r") as file:
-                lines = file.readlines()
-        except FileNotFoundError:
-            lines = []
-
-        found = False
-        for line in lines:
-            if line.startswith(str(item_id)):
-                found = True
-                break
-
-        if not found:
-            messagebox.showerror("Error", f"No corresponding item found for Item ID: {item_id}")
-            return  # Return to the main menu
-
-        new_title = simpledialog.askstring("Update Item", "Enter new title (or leave blank to keep the current):")
-        new_description = simpledialog.askstring("Update Item",
-                                                 "Enter new description (or leave blank to keep the current):")
-        new_price = simpledialog.askstring("Update Item", "Enter new price (or leave blank to keep the current):")
-
-        # Update the item with the new values
-        updated_data = []
-        for line in lines:
-            if line.startswith(str(item_id)):
-                # Update title if not blank
-                if new_title:
-                    line = line.replace(line.split(", ")[1], f"{new_title}")
-
-                # Update description if not blank
-                if new_description:
-                    line = line.replace(line.split(", ")[2], f"{new_description}")
-
-                # Update price if not blank
-                if new_price:
-                    line = line.replace(line.split(", ")[3], f"{new_price}\n")
-
+    found = False
+    updated_data = []
+    for line in lines:
+        if line.startswith(str(item_id)):
+            found = True
+        else:
             updated_data.append(line)
 
-        with open(self.main_ui.data_file, "w") as file:
+    if found:
+        with open("catalog_data.txt", "w") as file:
             file.writelines(updated_data)
 
-        messagebox.showinfo("Success", f"Item with Item ID {item_id} updated successfully!")
+        messagebox.showinfo("Success", f"Item with Item ID {item_id} deleted successfully!")
+    else:
+        messagebox.showerror("Error", f"No corresponding item found for Item ID: {item_id}")
 
 
+def update_item():
+    global frame_screen
+    reset_frame()  # Reset the frame before creating new widgets
 
-class DeleteItemUI:
-    def __init__(self, main_ui):
-        self.main_ui = main_ui  # Store the reference to the main UI
-        self.root = Toplevel(self.main_ui.root)
-        self.root.title("Delete Item")
+    entry_font = font.Font(size=20)  # Set the desired font size
 
-        # Add UI elements for DeleteItem here
-        label = Label(self.root, text="Delete Item by ID:")
-        label.pack(pady=10)
+    update_label = Label(frame_screen, text="Update Item", font=("Helvetica", 24))
+    update_label.place(x=100, y=30)
 
-        self.item_id_entry = Entry(self.root)
-        self.item_id_entry.pack(pady=10)
+    item_id_label = Label(frame_screen, text="Enter Item ID to update:")
+    item_id_label.place(x=100, y=90)
 
-        delete_button = Button(self.root, text="Delete", command=self.delete_item)
-        delete_button.pack(pady=10)
+    item_id_entry = Entry(frame_screen, width=40, font=entry_font)
+    item_id_entry.place(x=100, y=120, height=58)
 
-    def delete_item(self):
-        while True:
-            item_id = simpledialog.askstring("Delete Item", "Enter Item ID to delete:")
+    update_button = Button(frame_screen, text="Update", command=lambda: update_item_ui(item_id_entry.get()))
+    update_button.place(x=100, y=188, height=30)
 
-            if item_id is None:  # User clicked Cancel
-                return  # Return to the main menu
-
-            if not item_id.isdigit():
-                messagebox.showerror("Error", "Please enter a valid number for the Item ID.")
-                continue  # Ask the user for input again
-
-            item_id = int(item_id)
-
-            try:
-                with open(self.main_ui.data_file, "r") as file:
-                    lines = file.readlines()
-            except FileNotFoundError:
-                lines = []
-
-            found = False
-            updated_data = []
-
-            for line in lines:
-                if line.startswith(str(item_id)):
-                    found = True
-                else:
-                    updated_data.append(line)
-
-            if found:
-                with open(self.main_ui.data_file, "w") as file:
-                    file.writelines(updated_data)
-
-                messagebox.showinfo("Success", f"Item with Item ID {item_id} deleted successfully!")
-                break  # Exit the loop if the item is found and deleted
-            else:
-                retry = messagebox.askretrycancel("Error",
-                                                  f"No corresponding item found for Item ID: {item_id}. Try again?")
-
-                if not retry:
-                    return  # Return to the main menu
+    # Close button
+    close_button = Button(frame_screen, text="Close", command=reset_frame)
+    close_button.place(x=100, y=228, height=30)
 
 
-if __name__ == "__main__":
-    root = Tk()
-    MainUI(root, 'Frame 1.png', 'KATALOG.png', 'exit.png','AddItem.png','DisplayItems.png','UpdateItem.png','DeleteItem.png',)
-    root.mainloop()
+def update_item_ui(item_id_str):
+    global frame_screen
+    if not item_id_str.isdigit():
+        messagebox.showerror("Error", "Please enter a valid number for the Item ID.")
+        return
+
+    item_id = int(item_id_str)
+
+    try:
+        with open("catalog_data.txt", "r") as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        lines = []
+
+    found = False
+    item_data = []
+    for line in lines:
+        if line.startswith(str(item_id)):
+            found = True
+            item_data = line.strip().split(", ")[1:5]  # Extract name, price, brand, category
+            break
+
+    if found:
+        create_update_frame(item_id, item_data)
+    else:
+        messagebox.showerror("Error", f"No corresponding item found for Item ID: {item_id}")
+
+
+def create_update_frame(item_id, item_data):
+    global frame_screen
+    frame_screen.destroy()  # Destroy the existing frame
+    frame_screen = Frame(root, width=920, height=536, borderwidth=10, relief="groove")
+    frame_screen.place(x=360, y=184)
+    entry_font = font.Font(size=20)  # Set the desired font size
+
+    name_label = Label(frame_screen, text="Name:")
+    name_label.place(x=100, y=30)
+    name_entry = Entry(frame_screen, width=40, font=entry_font)
+    name_entry.insert(0, item_data[0])  # Pre-fill with existing name
+    name_entry.place(x=100, y=60, height=58)
+
+    price_label = Label(frame_screen, text="Price:")
+    price_label.place(x=100, y=130)
+    price_entry = Entry(frame_screen, width=40, font=entry_font)
+    price_entry.insert(0, item_data[1])  # Pre-fill with existing price
+    price_entry.place(x=100, y=158, height=58)
+
+    brand_label = Label(frame_screen, text="Brand:")
+    brand_label.place(x=100, y=226)
+    brand_entry = Entry(frame_screen, width=40, font=entry_font)
+    brand_entry.insert(0, item_data[2])  # Pre-fill with existing price
+    brand_entry.place(x=100, y=254, height=58)
+
+    category_label = Label(frame_screen, text="Category:")
+    category_label.place(x=100, y=322)
+    categories = [
+        "None",
+        "Makeup",
+        "Fragrance",
+        "Skincare",
+        "Bath and Body",
+        "Intimate Apparel",
+        "Accessories",
+        "Jewelry",
+        "Men's Store",
+        "Home & Kitchen",
+        "Nutrition",
+        "Other"
+    ]
+    category_var = StringVar()
+    category_var.set(item_data[3].strip())  # Pre-select existing category
+
+    category_dropdown = OptionMenu(frame_screen, category_var, *categories)
+    category_dropdown.place(x=100, y=350, height=30)
+
+    # Save button
+    save_button = Button(frame_screen, text="Save",
+                         command=lambda: save_updated_item(item_id, name_entry.get(), price_entry.get(),
+                                                           brand_entry.get(), category_var.get()))
+    save_button.place(x=100, y=418, height=58)
+    # Close button
+    close_button = Button(frame_screen, text="Close", command=reset_frame)
+    close_button.place(x=250, y=418, height=58)
+
+
+def save_updated_item(item_id, new_name, new_price, new_brand, new_category):
+    # Function to handle saving the updated item to the catalog
+    try:
+        with open("catalog_data.txt", "r") as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        lines = []
+
+    updated_data = []
+    for line in lines:
+        if line.startswith(str(item_id)):
+            # Update the name, price, and category if provided
+            updated_line = (
+                f"{item_id}, {new_name}, {new_price}, {new_brand}, "
+                f"{line.strip().split(',')[4] if new_category == 'None' else new_category}\n"
+            )
+            updated_data.append(updated_line)
+        else:
+            updated_data.append(line)
+
+    with open("catalog_data.txt", "w") as file:
+        file.writelines(updated_data)
+
+    messagebox.showinfo("Success", f"Item with Item ID {item_id} updated successfully!")
+    reset_frame()  # Close the update frame
+
+
+def display_items():
+    global table  # Make the table variable global
+
+    # Reset the frame before creating new widgets
+    reset_frame()
+
+    # Create search entry and button
+    search_label = ttk.Label(frame_screen, text="Search by Name:")
+    search_label.place(x=10, y=10)
+
+    search_entry = ttk.Entry(frame_screen, width=20)
+    search_entry.place(x=120, y=10)
+
+    search_button = ttk.Button(frame_screen, text="Search",
+                               command=lambda: search_and_display_items(search_entry.get()))
+    search_button.place(x=250, y=7)
+
+    # Create Treeview widget
+    table = ttk.Treeview(frame_screen, columns=('ID', 'Name', 'Price', 'Brand', 'Category'), show='headings')
+    table.place(x=0, y=40, width=890, height=430)  # Set width and height to match the frame
+
+    # Set column headings
+    table.heading('ID', text='ID')
+    table.heading('Name', text='Name')
+    table.heading('Price', text='Price')
+    table.heading('Brand', text='Brand')
+    table.heading('Category', text='Category')
+
+    # Set column widths
+    column_widths = {'ID': 50, 'Name': 150, 'Price': 100, 'Brand': 100, 'Category': 100}
+    for column, width in column_widths.items():
+        table.column(column, width=width)
+
+    # Set font size for the entire table
+    font_size = 12  # Adjust the font size as needed
+    font_style = font.Font(size=font_size)
+    table.tag_configure('myfont', font=font_style)
+
+    # Add a vertical scrollbar
+    scrollbar = ttk.Scrollbar(frame_screen, orient='vertical', command=table.yview)
+    scrollbar.place(x=870, y=50, height=410)  # Adjust the x and height values to match the frame
+
+    table.configure(yscroll=scrollbar.set)
+
+    # Event handler for resetting column widths
+    def reset_column_widths(event):
+        for column, width in column_widths.items():
+            table.column(column, width=width)
+
+    # Bind the event handler to the column header
+    for column in column_widths.keys():
+        table.heading(column, text=column, command=lambda c=column: reset_column_widths(c))
+        table.heading(column, anchor="w")
+
+    try:
+        with open("catalog_data.txt", "r") as file:
+            for line in file:
+                data = line.strip().split(", ")
+                table.insert('', index=0, values=(data[0], data[1], data[2], data[3], data[4]), tags='myfont')
+    except FileNotFoundError:
+        messagebox.showerror("Error", "Catalog data file not found.")
+
+    # Other widgets (close button)
+    close_button = ttk.Button(frame_screen, text="Close", command=reset_frame)
+    close_button.place(x=100, y=480, height=30)
+
+def search_and_display_items(search_term):
+    # Function to search items by name and update the table
+    global table  # Access the global table variable
+    table.delete(*table.get_children())  # Clear the existing items in the table
+
+    try:
+        with open("catalog_data.txt", "r") as file:
+            for line in file:
+                data = line.strip().split(", ")
+                if search_term.lower() in data[1].lower():
+                    table.insert('', index=0, values=(data[0], data[1], data[2], data[3], data[4]), tags='myfont')
+    except FileNotFoundError:
+        messagebox.showerror("Error", "Catalog data file not found.")
+
+root = Tk()
+root.geometry('1280x720')
+root.resizable(False, False)
+root.title('Avon Catalog Management System')
+
+logo_image = PhotoImage(file='avonlogo.png')
+root.iconphoto(True, logo_image)
+
+framePhoto = PhotoImage(file='Frame 1.png')
+frame_photo_label = Label(root, border=0, image=framePhoto)
+frame_photo_label.pack(fill=BOTH, expand=True)
+
+# Logo
+slogan_frame = PhotoImage(file='Group 1.png')
+slogan_frame_label = Label(root, image=slogan_frame, border=0, bg='#E4044B')
+slogan_frame_label.place(x=0, y=140)
+
+frame_screen = Frame(root, width=920, height=536, borderwidth=10, relief="groove")
+frame_screen.place(x=360, y=184)
+
+add_item_image = PhotoImage(file='addbutton.png')
+add_button = Button(root, text="Add Item", image=add_item_image, bg='#FFFFFF', borderwidth=0, command=add_item)
+add_button.image = add_item_image
+add_button.place(x=19, y=233, anchor='nw')
+
+display_items_image = PhotoImage(file='displaybutton.png')
+display_button = Button(root, text="Display Items", image=display_items_image, bg='#FFFFFF', borderwidth=0,
+                        command=display_items)
+display_button.image = display_items_image
+display_button.place(x=19, y=341, anchor='nw')
+
+update_item_image = PhotoImage(file='updatebutton.png')
+update_button = Button(root, text="Update Item", image=update_item_image, bg='#FFFFFF', borderwidth=0,
+                       command=update_item)
+update_button.image = update_item_image
+update_button.place(x=19, y=449, anchor='nw')
+
+delete_item_image = PhotoImage(file='deletebutton.png')
+delete_button = Button(root, text="Delete Item", image=delete_item_image, bg='#FFFFFF', borderwidth=0, command=delete)
+delete_button.image = delete_item_image
+delete_button.place(x=19, y=557, anchor='nw')
+
+root.mainloop()
