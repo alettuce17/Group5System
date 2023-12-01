@@ -1,12 +1,13 @@
 from tkinter import *
-from tkinter import messagebox, font, ttk
+from tkinter import messagebox, font, ttk, simpledialog
 import random
-from reportlab.pdfgen import canvas
+from fpdf import FPDF
+
 
 # Declare entry variables as global
 name_entry = None
 price_entry = None
-brand_entry = None
+description_entry = None
 category_var = None
 frame_visible = True
 table = None  # Add a global variable for the table
@@ -21,7 +22,7 @@ def reset_frame():
 
 
 def add_item():
-    global frame_screen, name_entry, price_entry, brand_entry, category_var, frame_visible
+    global frame_screen, name_entry, price_entry, description_entry, category_var, frame_visible
     reset_frame()  # Reset the frame before creating new widgets
     font.Font(size=20)
 
@@ -39,10 +40,10 @@ def add_item():
     price_entry = Entry(frame_screen, width=40, font=entry_font)
     price_entry.place(x=100, y=208, height=58)
 
-    brand_label = Label(frame_screen, text="Brand:")
-    brand_label.place(x=100, y=276)
-    brand_entry = Entry(frame_screen, width=40, font=entry_font)
-    brand_entry.place(x=100, y=304, height=58)
+    description_label = Label(frame_screen, text="Description:")
+    description_label.place(x=100, y=276)
+    description_entry = Entry(frame_screen, width=40, font=entry_font)
+    description_entry.place(x=100, y=304, height=58)
 
 
     # Category dropdown using Menubutton
@@ -89,10 +90,10 @@ def add_item():
 
 def save_item():
     # Function to handle the "Save" button click
-    global name_entry, price_entry, brand_entry, category_var
+    global name_entry, price_entry, description_entry, category_var
     item_name = name_entry.get()
     item_price = price_entry.get()
-    item_brand = brand_entry.get()
+    item_description = description_entry.get()
     item_category = category_var.get()
 
     # Check for empty fields, non-numeric price, and category not selected
@@ -107,7 +108,7 @@ def save_item():
 
     item_id = generate_unique_id()
     with open("catalog_data.txt", "a") as file:
-        file.write(f"{item_id}, {item_name}, {item_price}, {item_brand}, {item_category}\n")
+        file.write(f"{item_id}, {item_name}, {item_price}, {item_description}, {item_category}\n")
 
     messagebox.showinfo("Success", f"Item added successfully!\nItem ID: {item_id}")
 
@@ -153,11 +154,11 @@ def delete():
     item_id_entry.place(x=100, y=120, height=58)
 
     delete_button = Button(frame_screen, text="Delete", command=lambda: delete_item(item_id_entry.get()))
-    delete_button.place(x=100, y=188, height=58)
+    delete_button.place(x=100, y=188, height=30)
 
     # Close button
     close_button = Button(frame_screen, text="Close", command=reset_frame)
-    close_button.place(x=250, y=188, height=58)
+    close_button.place(x=100, y=228, height=30)
 
 
 def delete_item(item_id_str):
@@ -235,7 +236,7 @@ def update_item_ui(item_id_str):
     for line in lines:
         if line.startswith(str(item_id)):
             found = True
-            item_data = line.strip().split(", ")[1:5]  # Extract name, price, brand, category
+            item_data = line.strip().split(", ")[1:5]  # Extract name, price, description, category
             break
 
     if found:
@@ -263,11 +264,11 @@ def create_update_frame(item_id, item_data):
     price_entry.insert(0, item_data[1])  # Pre-fill with existing price
     price_entry.place(x=100, y=158, height=58)
 
-    brand_label = Label(frame_screen, text="Brand:")
-    brand_label.place(x=100, y=226)
-    brand_entry = Entry(frame_screen, width=40, font=entry_font)
-    brand_entry.insert(0, item_data[2])  # Pre-fill with existing price
-    brand_entry.place(x=100, y=254, height=58)
+    description_label = Label(frame_screen, text="Description:")
+    description_label.place(x=100, y=226)
+    description_entry = Entry(frame_screen, width=40, font=entry_font)
+    description_entry.insert(0, item_data[2])  # Pre-fill with existing price
+    description_entry.place(x=100, y=254, height=58)
 
     category_label = Label(frame_screen, text="Category:")
     category_label.place(x=100, y=322)
@@ -294,14 +295,14 @@ def create_update_frame(item_id, item_data):
     # Save button
     save_button = Button(frame_screen, text="Save",
                          command=lambda: save_updated_item(item_id, name_entry.get(), price_entry.get(),
-                                                           brand_entry.get(), category_var.get()))
+                                                           description_entry.get(), category_var.get()))
     save_button.place(x=100, y=418, height=58)
     # Close button
     close_button = Button(frame_screen, text="Close", command=reset_frame)
     close_button.place(x=250, y=418, height=58)
 
 
-def save_updated_item(item_id, new_name, new_price, new_brand, new_category):
+def save_updated_item(item_id, new_name, new_price, new_description, new_category):
     # Function to handle saving the updated item to the catalog
     try:
         with open("catalog_data.txt", "r") as file:
@@ -314,7 +315,7 @@ def save_updated_item(item_id, new_name, new_price, new_brand, new_category):
         if line.startswith(str(item_id)):
             # Update the name, price, and category if provided
             updated_line = (
-                f"{item_id}, {new_name}, {new_price}, {new_brand}, "
+                f"{item_id}, {new_name}, {new_price}, {new_description}, "
                 f"{line.strip().split(',')[4] if new_category == 'None' else new_category}\n"
             )
             updated_data.append(updated_line)
@@ -329,35 +330,73 @@ def save_updated_item(item_id, new_name, new_price, new_brand, new_category):
 
 
 def display_items():
-    global table  # Make the table variable global
-
+    global table, category_var  # Declare category_var as global
     # Reset the frame before creating new widgets
     reset_frame()
 
-    # Create search entry and button
+    generate_pdf_image = PhotoImage(file='pdfbutton.png')
+    generate_pdf_button = Button(frame_screen, text="Generate PDF", image=generate_pdf_image, bg='#F52D2D',
+                                 borderwidth=0,
+                                 command=generate_pdf_from_table)
+    generate_pdf_button.image = generate_pdf_image
+    generate_pdf_button.place(x=855, y=0, anchor='nw')
+
+    # Create search entry, category dropdown, and button
     search_label = ttk.Label(frame_screen, text="Search by Name:")
     search_label.place(x=10, y=10)
 
     search_entry = ttk.Entry(frame_screen, width=20)
     search_entry.place(x=120, y=10)
 
+    # Category dropdown using Menubutton
+    category_label = Label(frame_screen, text="Category:")
+    category_label.place(x=350, y=10)
+
+    categories = [
+        "All",
+        "Makeup",
+        "Fragrance",
+        "Skincare",
+        "Bath and Body",
+        "Intimate Apparel",
+        "Accessories",
+        "Jewelry",
+        "Men's Store",
+        "Home & Kitchen",
+        "Nutrition",
+        "Other"
+    ]
+
+    category_var = StringVar()
+    category_var.set(categories[0])  # Set default category
+
+    category_menu = Menubutton(frame_screen, textvariable=category_var, indicatoron=True, borderwidth=1,
+                               relief="raised", width=10)
+    category_menu.place(x=420, y=7, height=30)
+
+    category_menu.menu = Menu(category_menu, tearoff=False)
+    category_menu["menu"] = category_menu.menu
+
+    for category in categories:
+        category_menu.menu.add_radiobutton(label=category, variable=category_var, value=category)
+
     search_button = ttk.Button(frame_screen, text="Search",
-                               command=lambda: search_and_display_items(search_entry.get()))
-    search_button.place(x=250, y=7)
+                               command=lambda: search_and_display_items(search_entry.get(), category_var.get()))
+    search_button.place(x=550, y=7)
 
     # Create Treeview widget
-    table = ttk.Treeview(frame_screen, columns=('ID', 'Name', 'Price', 'Brand', 'Category'), show='headings')
-    table.place(x=0, y=40, width=890, height=430)  # Set width and height to match the frame
+    table = ttk.Treeview(frame_screen, columns=('ID', 'Name', 'Price', 'Description', 'Category'), show='headings')
+    table.place(x=0, y=40, width=890, height=430)
 
     # Set column headings
     table.heading('ID', text='ID')
     table.heading('Name', text='Name')
     table.heading('Price', text='Price')
-    table.heading('Brand', text='Brand')
+    table.heading('Description', text='Description')
     table.heading('Category', text='Category')
 
     # Set column widths
-    column_widths = {'ID': 50, 'Name': 150, 'Price': 100, 'Brand': 100, 'Category': 100}
+    column_widths = {'ID': 50, 'Name': 150, 'Price': 100, 'Description': 100, 'Category': 100}
     for column, width in column_widths.items():
         table.column(column, width=width)
 
@@ -368,7 +407,7 @@ def display_items():
 
     # Add a vertical scrollbar
     scrollbar = ttk.Scrollbar(frame_screen, orient='vertical', command=table.yview)
-    scrollbar.place(x=870, y=50, height=410)  # Adjust the x and height values to match the frame
+    scrollbar.place(x=870, y=50, height=410)
 
     table.configure(yscroll=scrollbar.set)
 
@@ -376,6 +415,26 @@ def display_items():
     def reset_column_widths(event):
         for column, width in column_widths.items():
             table.column(column, width=width)
+
+    # Bind the callback function to the cell click event
+    def on_cell_click(event):
+        region = table.identify("region", event.x, event.y)
+
+        if region == "heading":
+            # Clicked on a column heading, not a cell
+            return
+
+        item = table.selection()[0]
+        item_data = table.item(item, 'values')
+        full_description = item_data[3]  # Assuming description is at index 3
+
+        # Deselect the currently selected item
+        table.selection_remove(item)
+
+        # Display full description in a pop-up window
+        simpledialog.messagebox.showinfo("Full Description", full_description)
+
+    table.bind('<ButtonRelease-1>', on_cell_click)
 
     # Bind the event handler to the column header
     for column in column_widths.keys():
@@ -390,12 +449,15 @@ def display_items():
     except FileNotFoundError:
         messagebox.showerror("Error", "Catalog data file not found.")
 
+    # Store the table globally
+    table = table
+
     # Other widgets (close button)
     close_button = ttk.Button(frame_screen, text="Close", command=reset_frame)
     close_button.place(x=100, y=480, height=30)
 
-def search_and_display_items(search_term):
-    # Function to search items by name and update the table
+
+def search_and_display_items(search_term, selected_category):
     global table  # Access the global table variable
     table.delete(*table.get_children())  # Clear the existing items in the table
 
@@ -403,10 +465,77 @@ def search_and_display_items(search_term):
         with open("catalog_data.txt", "r") as file:
             for line in file:
                 data = line.strip().split(", ")
-                if search_term.lower() in data[1].lower():
+                if (selected_category == "All" or data[4] == selected_category) and search_term.lower() in data[1].lower():
                     table.insert('', index=0, values=(data[0], data[1], data[2], data[3], data[4]), tags='myfont')
     except FileNotFoundError:
         messagebox.showerror("Error", "Catalog data file not found.")
+class PDFWithFooter(FPDF):
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("Arial", size=10)
+        self.cell(0, 10, f"Page {self.page_no()}", 0, 0, 'C')
+
+
+def truncate_text(text, max_length):
+    return (text[:max_length] + '...') if len(text) > max_length else text
+
+
+def generate_pdf_from_table():
+    global table  # Access the global table variable
+
+    # Get the table data
+    data = []
+    for item_id in table.get_children():
+        item_data = table.item(item_id)['values']
+        truncated_data = [truncate_text(str(col), 30) for col in item_data]  # Adjust max_length as needed
+        data.append(truncated_data)
+
+    # Create a PDF document with footer
+    pdf = PDFWithFooter()
+
+    # Add the first page
+    pdf.add_page()
+
+    # Add Avon logo to the top of the PDF
+    avon_logo = "avonlogo.png"  # Adjust the path accordingly
+    pdf.image(avon_logo, x=10, y=8, w=30)
+
+    # Set font for the title
+    pdf.set_font("Arial", 'B', 16)
+    pdf.ln(10)  # Move down to leave space between logo and title
+    pdf.cell(0, 10, 'Avon Catalog', ln=True, align='C')
+
+    # Move down to leave space for the table
+    pdf.ln(20)
+
+    # Set font for the table content
+    pdf.set_font("Arial", size=12)
+
+    # Set background color for header row
+    pdf.set_fill_color(228, 4, 75)
+
+    # Define the column widths based on your requirements
+    col_widths = [30, 40, 40, 40, 40]
+
+    # Add column headings to PDF
+    for i, col in enumerate(table["columns"]):
+        pdf.cell(col_widths[i], 10, str(col), border=1, fill=True, ln=False)
+
+    pdf.ln()
+
+    # Set background colors for data rows
+    pdf.set_fill_color(255, 255, 255)
+    for row in data:
+        for i, col in enumerate(row):
+            pdf.cell(col_widths[i], 10, truncate_text(str(col), 15), border=1, fill=True, ln=False)  # Adjust max_length as needed
+        pdf.ln(10)  # Leave space between rows
+
+        # Check if there's enough space for another row, if not, add a new page
+        if pdf.get_y() + 20 > pdf.h - 15:
+            pdf.add_page()
+
+    pdf.output("Avon_Catalog.pdf")
+    print("PDF generated successfully.")
 
 root = Tk()
 root.geometry('1280x720')
