@@ -145,8 +145,13 @@ def save_item():
     item_description = description_entry.get()
     item_category = category_var.get()
 
-    # Check for empty fields, non-numeric price, category not selected, and no image selected
-    if not item_price.isdigit() or item_category == "None" or image_path is None:
+    # Check if no image is selected
+    if image_path is None:
+        messagebox.showerror("Error", "Please select an image.")
+        return
+
+    # Check for empty fields, non-numeric price, category not selected
+    if not item_price.isdigit() or item_category == "None":
         messagebox.showerror("Error", "Please fill in all fields correctly.")
         return
 
@@ -157,11 +162,12 @@ def save_item():
 
     item_id = generate_unique_id()
 
-    # Replace newline characters with a space
-    item_description_cleaned = item_description.replace("\n", " ")
+    # Replace "|" with "\" in item_name and item_description
+    item_name_cleaned = item_name.replace("|", "\\")
+    item_description_cleaned = item_description.replace("\n", " ").replace("|", "\\")
 
     # Use pipe "|" as a separator for the data
-    data_to_write = f"{item_id}|{item_name}|{item_price}|{item_description_cleaned}|{item_category}|{image_path}\n"
+    data_to_write = f"{item_id}|{item_name_cleaned}|{item_price}|{item_description_cleaned}|{item_category}|{image_path}\n"
 
     # Append the data to the file
     with open("catalog_data.txt", "a") as file:
@@ -961,7 +967,7 @@ def show_item_info(item):
     item_box.photo = photo
     item_box.pack()
 
-    # Create a frame for the rounded price display
+    # Create a frame for the price display
     price_frame = tk.Frame(info_window, bg="#e7004c", padx=10, pady=5, relief="solid", borderwidth=1, bd=1)
     price_frame.pack(pady=5)
 
@@ -984,13 +990,11 @@ def show_item_info(item):
     description_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     description_text["yscrollcommand"] = description_scrollbar.set
 
-    # Display additional information
-    additional_info_label = ttk.Label(
-        info_window,
-        text=f"Category: {item['category']}\n"
-             f"ID: {item['id']}\n"
-    )
-    additional_info_label.pack(pady=10)
+    # Display additional information using a Text widget
+    additional_info_text = tk.Text(info_window, wrap="word", height=2, width=40)
+    additional_info_text.insert(tk.END, f"Category: {item['category']}\nID: {item['id']}")
+    additional_info_text.config(state=tk.DISABLED)
+    additional_info_text.pack(pady=10)
 
     # Center the window on the screen
     info_window.update_idletasks()
