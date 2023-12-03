@@ -22,6 +22,14 @@ current_info_window = None
 def catalog_file_exists():
     return os.path.isfile("catalog_data.txt")
 
+def validate_float(value):
+    try:
+        if value:
+            float(value)
+        return True
+    except ValueError:
+        return False
+
 
 def reset_frame():
     global frame_screen
@@ -47,7 +55,8 @@ def add_item():
 
     price_label = Label(frame_screen, text="Price:")
     price_label.place(x=100, y=180)
-    price_entry = ttk.Entry(frame_screen, width=40, font=entry_font)
+    price_entry = ttk.Entry(frame_screen, width=40, font=entry_font, validate="key",
+                            validatecommand=(frame_screen.register(validate_float), '%P'))
     price_entry.place(x=100, y=208, height=58)
 
     description_label = Label(frame_screen, text="Description:")
@@ -141,7 +150,11 @@ def update_image_preview(image_preview_frame=None):
 def save_item():
     global name_entry, price_entry, description_entry, category_var, image_path
     item_name = name_entry.get()
-    item_price = price_entry.get()
+    try:
+        item_price = float(price_entry.get())
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid numeric value for the price.")
+        return
     item_description = description_entry.get()
     item_category = category_var.get()
 
@@ -151,7 +164,7 @@ def save_item():
         return
 
     # Check for empty fields, non-numeric price, category not selected
-    if not item_price.isdigit() or item_category == "None":
+    if not (item_price is not None and isinstance(item_price, (int, float))) or item_category == "None":
         messagebox.showerror("Error", "Please fill in all fields correctly.")
         return
 
@@ -160,12 +173,12 @@ def save_item():
         messagebox.showerror("Error", "Item name already exists in the catalog. Please choose a different name.")
         return
 
-    item_id = generate_unique_id()
+
 
     # Replace "|" with "\" in item_name and item_description
     item_name_cleaned = item_name.replace("|", "\\")
     item_description_cleaned = item_description.replace("\n", " ").replace("|", "\\")
-
+    item_id = generate_unique_id()
     # Use pipe "|" as a separator for the data
     data_to_write = f"{item_id}|{item_name_cleaned}|{item_price}|{item_description_cleaned}|{item_category}|{image_path}\n"
 
@@ -358,7 +371,8 @@ def create_update_frame(item_id, item_data):
 
     price_label = Label(frame_screen, text="Price:")
     price_label.place(x=100, y=130)
-    price_entry = ttk.Entry(frame_screen, width=40, font=entry_font)
+    price_entry = ttk.Entry(frame_screen, width=40, font=entry_font, validate="key",
+                            validatecommand=(frame_screen.register(validate_float), '%P'))
     price_entry.insert(0, item_data[1])  # Pre-fill with existing price
     price_entry.place(x=100, y=158, height=58)
 
@@ -488,14 +502,25 @@ def save_updated_item(item_id, new_name, new_price, new_description, new_categor
     except FileNotFoundError:
         lines = []
 
-    if not new_price.isdigit():
-        messagebox.showerror("Error", "Please fill in all fields correctly and select a valid category.")
+    # Check for empty fields, non-numeric price, category not selected
+    try:
+        new_price = float(new_price)
+    except ValueError:
+        messagebox.showerror("Error", "Please enter a valid numeric value for the price.")
+        return
+
+    if not new_price or not isinstance(new_price, (int, float)):
+        messagebox.showerror("Error", "Please enter a valid numeric value for the price.")
         return
 
     # Check if the item name already exists in the catalog, excluding the current item being updated
     if is_duplicate_name(new_name) and new_name != get_item_name_by_id(item_id):
         messagebox.showerror("Error", "Item name already exists in the catalog. Please choose a different name.")
         return
+
+    # Replace "|" with "\" in item_name and item_description
+    item_name_cleaned = new_name.replace("|", "\\")
+    item_description_cleaned = new_description.replace("\n", " ").replace("|", "\\")
 
     updated_data = []
     for line in lines:
@@ -506,7 +531,7 @@ def save_updated_item(item_id, new_name, new_price, new_description, new_categor
             # Check if the data is the same as existing data
             if (
                     new_name == line.strip().split("|")[1] and
-                    new_price == line.strip().split("|")[2] and
+                    new_price == float(line.strip().split("|")[2]) and
                     new_description == line.strip().split("|")[3] and
                     new_category == line.strip().split("|")[4] and
                     image_path_entry.get() == existing_image_path
@@ -517,7 +542,7 @@ def save_updated_item(item_id, new_name, new_price, new_description, new_categor
 
             # Update the name, price, category, and description if provided
             updated_line = (
-                f"{item_id}, {new_name}, {new_price}, {new_description}, {new_category}, {image_path_entry.get()}\n"
+                f"{item_id}|{item_name_cleaned}|{new_price}|{item_description_cleaned}|{new_category}|{image_path_entry.get()}\n"
             )
             updated_data.append(updated_line)
         else:
@@ -1006,13 +1031,6 @@ def show_item_info(item):
 
     # Update the current information window
     current_info_window = info_window
-
-# Example usage:
-item = {'name': 'Item Name', 'price': 25.50, 'id': 123, 'category': 'Electronics',
-        'description': 'This is a long description for the item. ' * 10,
-        'image_path': 'path/to/image.png'}
-
-
 root = Tk()
 root.geometry('1280x720')
 root.resizable(False, False)
