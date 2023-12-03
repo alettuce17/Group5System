@@ -421,7 +421,7 @@ def create_update_frame(item_id, item_data):
     img.thumbnail((150, 150), Image.BICUBIC)
     preview_photo = ImageTk.PhotoImage(img)
     image_preview = Label(frame_screen, image=preview_photo)
-    image_preview.photo = preview_photo  # To prevent image from being garbage collected
+    image_preview.photo = preview_photo
     image_preview.place(x=500, y=428)
 
     # Button for updating the image
@@ -455,7 +455,7 @@ def update_image_preview1(image_path):
     img.thumbnail((150, 150), Image.BICUBIC)
     preview_photo = ImageTk.PhotoImage(img)
     image_preview = Label(frame_screen, image=preview_photo)
-    image_preview.photo = preview_photo  # To prevent the image from being garbage collected
+    image_preview.photo = preview_photo
     image_preview.place(x=500, y=428)
     image_preview_label.image_preview = image_preview
 
@@ -471,7 +471,6 @@ def update_image_path_button():
     image_path_entry.delete(0, tk.END)
     image_path_entry.insert(0, new_image_path)
 
-    # Optionally, you can display a message to inform the user about the update
     update_image_preview1(new_image_path)
 
 
@@ -621,8 +620,8 @@ def display_table():
     category_var.set(categories[0])  # Set default category
 
     category_menu = Menubutton(frame_screen, textvariable=category_var, indicatoron=True, borderwidth=1,
-                               relief="raised", width=10)
-    category_menu.place(x=420, y=7, height=30)
+                               relief="raised", width=13)
+    category_menu.place(x=420, y=10, height=20)
 
     category_menu.menu = Menu(category_menu, tearoff=False)
     category_menu["menu"] = category_menu.menu
@@ -1035,19 +1034,21 @@ root = Tk()
 root.geometry('1280x720')
 root.resizable(False, False)
 root.title('Avon Catalog Management System')
-
+# Logo
 logo_image = PhotoImage(file='avonlogo.png')
 root.iconphoto(True, logo_image)
 
+#Main Ui Interface
 framePhoto = PhotoImage(file='Frame 1.png')
 frame_photo_label = Label(root, border=0, image=framePhoto)
 frame_photo_label.pack(fill=BOTH, expand=True)
 
-# Logo
-slogan_frame = PhotoImage(file='Group 1.png')
+#Slogan Image
+slogan_frame = PhotoImage(file='slogan.png')
 slogan_frame_label = Label(root, image=slogan_frame, border=0, bg='#E4044B')
 slogan_frame_label.place(x=0, y=140)
 
+# Frame
 frame_screen = Frame(root, width=920, height=536, borderwidth=10, relief="flat")
 frame_screen.place(x=360, y=184)
 
