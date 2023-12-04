@@ -149,13 +149,13 @@ def update_image_preview(image_preview_frame=None):
 
 def save_item():
     global name_entry, price_entry, description_entry, category_var, image_path
-    item_name = name_entry.get()
+    item_name = name_entry.get().strip()  # Remove leading and trailing spaces
     try:
         item_price = float(price_entry.get())
     except ValueError:
         messagebox.showerror("Error", "Please enter a valid numeric value for the price.")
         return
-    item_description = description_entry.get()
+    item_description = description_entry.get().strip()  # Remove leading and trailing spaces
     item_category = category_var.get()
 
     # Check if no image is selected
@@ -168,12 +168,15 @@ def save_item():
         messagebox.showerror("Error", "Please fill in all fields correctly.")
         return
 
+    # Check if any of the fields contain only spaces
+    if not (item_name and item_description and item_category):
+        messagebox.showerror("Error", "Please fill in all fields correctly.")
+        return
+
     # Check if the item name already exists in the catalog
     if is_duplicate_name(item_name):
         messagebox.showerror("Error", "Item name already exists in the catalog. Please choose a different name.")
         return
-
-
 
     # Replace "|" with "\" in item_name and item_description
     item_name_cleaned = item_name.replace("|", "\\")
@@ -410,19 +413,11 @@ def create_update_frame(item_id, item_data):
     # Entry for image path
     image_path_entry = ttk.Entry(frame_screen, width=40, font=entry_font)
     image_path_entry.insert(0, item_data[4] if len(item_data) > 4 else "")  # Pre-fill with existing image path
-    image_path_entry.place(x=100, y=480, height=30, width=83)
 
     # Load and display the image preview
     update_image_preview1(item_data[4] if len(item_data) > 4 else "")  # Initial image preview
 
-    # Load and display the image preview
-    image_path = item_data[4] if len(item_data) > 4 else ""
-    img = Image.open(image_path)
-    img.thumbnail((150, 150), Image.BICUBIC)
-    preview_photo = ImageTk.PhotoImage(img)
-    image_preview = Label(frame_screen, image=preview_photo)
-    image_preview.photo = preview_photo
-    image_preview.place(x=500, y=428)
+
 
     # Button for updating the image
     update_image_button = ttk.Button(frame_screen, text="Update Image", command=update_image_path_button)
@@ -456,7 +451,7 @@ def update_image_preview1(image_path):
     preview_photo = ImageTk.PhotoImage(img)
     image_preview = Label(frame_screen, image=preview_photo)
     image_preview.photo = preview_photo
-    image_preview.place(x=500, y=428)
+    image_preview.place(x=280, y=360,height=126, width=137)
     image_preview_label.image_preview = image_preview
 
 
@@ -510,6 +505,11 @@ def save_updated_item(item_id, new_name, new_price, new_description, new_categor
 
     if not new_price or not isinstance(new_price, (int, float)):
         messagebox.showerror("Error", "Please enter a valid numeric value for the price.")
+        return
+
+    # Check if any of the fields contain only spaces
+    if not (new_name.strip() and new_description.strip() and new_category.strip()):
+        messagebox.showerror("Error", "Please fill in all fields correctly.")
         return
 
     # Check if the item name already exists in the catalog, excluding the current item being updated
@@ -769,7 +769,7 @@ def generate_pdf_from_table():
     pdf.add_page()
 
     # Add Avon logo to the top of the PDF
-    avon_logo = "avonlogo.png"  # Adjust the path accordingly
+    avon_logo = "avon_logo.png"  # Adjust the path accordingly
     pdf.image(avon_logo, x=10, y=8, w=30)
 
     # Set font for the title
@@ -1035,7 +1035,7 @@ root.geometry('1280x720')
 root.resizable(False, False)
 root.title('Avon Catalog Management System')
 # Logo
-logo_image = PhotoImage(file='avonlogo.png')
+logo_image = PhotoImage(file='avon_logo.png')
 root.iconphoto(True, logo_image)
 
 #Main Ui Interface
